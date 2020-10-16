@@ -1,7 +1,7 @@
 package com.livanov.demo.integrationtesting.infrastructure.web;
 
 import com.livanov.demo.integrationtesting.domain.IpDetails;
-import com.livanov.demo.integrationtesting.domain.IpDetailsService;
+import com.livanov.demo.integrationtesting.domain.IpDetailsThirdPartyService;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -15,7 +15,7 @@ import java.util.List;
 @Slf4j
 public class IpDetailsController {
 
-    private final IpDetailsService service;
+    private final IpDetailsThirdPartyService service;
 
     @GetMapping("ip")
     public List<IpDetails> getAll() {
