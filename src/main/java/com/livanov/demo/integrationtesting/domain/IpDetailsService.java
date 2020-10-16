@@ -25,38 +25,42 @@ public class IpDetailsService {
 
     public IpDetails getInfo(String ip) {
 
-        Optional<IpDetails> ipInfoFromCache = tryGetFromCache(ip);
+        return fromCache(ip)
+                .orElse(fromDb(ip)
+                .orElse(fromThirdParty(ip)
+                .orElseThrow(() -> new IpDetailsNotFoundException(ip))));
+    }
 
-        if (ipInfoFromCache.isPresent()) {
-            log.info("IpDetails [{}]     retrieved from Cache.", ip);
-
-            return ipInfoFromCache.get();
-        }
-
-        Optional<IpDetails> ipInfoFromDb = tryGetFromDb(ip);
-
-        if (ipInfoFromDb.isPresent()) {
-            log.info("IpDetails [{}]     retrieved from Database.", ip);
-
-            IpDetails ipDetails = ipInfoFromDb.get();
-            trySaveToCache(ipDetails);
-
-            return ipDetails;
-        }
-
+    private Optional<IpDetails> fromThirdParty(String ip) {
         Optional<IpDetails> ipInfoFromService = tryGetFromThirdParty(ip);
 
-        if (ipInfoFromService.isPresent()) {
+        ipInfoFromService.ifPresent(ipDetails -> {
             log.info("IpDetails [{}]     retrieved from Third Party Provider Service.", ip);
-
-            IpDetails ipDetails = ipInfoFromService.get();
             trySaveToDb(ipDetails);
             trySaveToCache(ipDetails);
+        });
 
-            return ipDetails;
-        }
+        return ipInfoFromService;
+    }
 
-        throw new IpDetailsNotFoundException(ip);
+    private Optional<IpDetails> fromCache(String ip) {
+        Optional<IpDetails> ipInfoFromCache = tryGetFromCache(ip);
+
+        ipInfoFromCache.ifPresent(ipDetails ->
+                log.info("IpDetails [{}]     retrieved from Cache.", ip)
+        );
+
+        return ipInfoFromCache;
+    }
+
+
+    private Optional<IpDetails> fromDb(String ip) {
+        Optional<IpDetails> ipInfoFromDb = tryGetFromDb(ip);
+        ipInfoFromDb.ifPresent((ipDetails) -> {
+            log.info("IpDetails [{}]     retrieved from Database.", ip);
+            trySaveToCache(ipDetails);
+        });
+        return ipInfoFromDb;
     }
 
     public List<IpDetails> getAll() {
